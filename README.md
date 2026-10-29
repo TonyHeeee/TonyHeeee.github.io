@@ -14,7 +14,8 @@ python -m http.server 4173 --bind 127.0.0.1 --directory dist
 
 ## 已实现
 
-- 响应式中文个人首页，针对桌面和手机布局。
+- 中英双语个人首页，首次访问默认英文，右上角 EN / 中文切换并保存语言偏好。
+- 导航、项目、详情弹窗、提示、页面标题和无障碍标签同步切换语言，针对桌面和手机布局。
 - 浅色纸感与深色模式，保存主题选择。
 - AI 应用、后端开发、开源贡献项目筛选。
 - 三个项目详情弹窗，支持 Escape、焦点返回和键盘操作。
@@ -39,10 +40,12 @@ python -m http.server 4173 --bind 127.0.0.1 --directory dist
 ## 修改内容
 
 - 首页、技能、教育与联系方式：`dist/index.html`
-- 项目展开详情：`dist/app.js` 中的 `projects`
+- 首页翻译：`dist/i18n.js`，对应 `dist/index.html` 中的 `data-i18n` 标记
+- 项目展开详情：`dist/app.js` 中的 `projectsEn` 与 `projectsZh`
 - 配色、字体、间距及手机布局：`dist/style.css`
-- 简历：替换 `dist/assets/resume-zh.pdf`
+- 英文简历：替换 `dist/assets/resume-en.pdf`
+- 中文简历：替换 `dist/assets/resume-zh.pdf`
 
-项目经历、时间和数据来自提供的 2026 年 10 月中文简历；页面描述区分个人参与和团队成果。格物智造链接到 ETET114514，求职主账号指向 TonyHeeee。
+项目经历、时间和数据来自提供的 2026 年 10 月中英文简历；页面描述区分个人参与和团队成果。格物智造链接到 ETET114514，求职主账号指向 TonyHeeee。英文页面使用 Tony (Donglin) He 和 Gmail，中文页面使用何东霖和 163 邮箱，简历查看及下载随语言同步切换。
 
 发布内容含邮箱和可下载的原始简历，原始简历中含电话。更新联系方式时请同时更新页面和 PDF。

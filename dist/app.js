@@ -3,9 +3,12 @@
 const $ = (selector) => document.querySelector(selector);
 const themeToggle = $('#theme-toggle');
 const root = document.documentElement;
+let language = 'en';
+try { if (localStorage.getItem('donglin-language') === 'zh') language = 'zh'; } catch { /* English is the default without storage. */ }
+const t = key => translations[language][key];
 function applyTheme(theme) {
   root.dataset.theme = theme;
-  themeToggle.setAttribute('aria-label', theme === 'dark' ? '切换到浅色模式' : '切换到深色模式');
+  themeToggle.setAttribute('aria-label', t(theme === 'dark' ? 'themeLight' : 'themeDark'));
   themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
   document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#151a1b' : '#f5f4f0';
 }
@@ -30,11 +33,11 @@ document.querySelectorAll('[data-filter]').forEach(button => {
       project.hidden = !visible;
       if (visible) count++;
     });
-    $('#filter-status').textContent = `显示 ${count} 个项目`;
+    $('#filter-status').textContent = t('projectCount').replace('{count}', count);
   });
 });
 
-const projects = {
+const projectsZh = {
   gewu: {
     kicker: '01 / AI APPLICATION', title: '格物智造 · GewuZhizao',
     role: '核心开发成员 · 双人协作项目 · 2026.09 至今',
@@ -71,12 +74,48 @@ const projects = {
     links: [['查看已合并 PR #20666', 'https://github.com/PipedreamHQ/pipedream/pull/20666']]
   }
 };
+const projectsEn = {
+  gewu: {
+    kicker: '01 / AI APPLICATION', title: 'GewuZhizao · AI Interior Design',
+    role: 'Core developer · Two-person team · Sep 2026–present',
+    sections: [
+      ['The goal', 'Connect 2D floor-plan analysis and editing with interactive 3D interior design, including recognition, geometric repair, spatial modeling, and furniture editing.'],
+      ['My contribution: architecture & iteration', 'Contributed to technical planning and the initial framework, wrote part of the framework code, and used Codex to assist with feature development, code changes, and module integration across the 2D editor and 3D modeling workflow.'],
+      ['My contribution: vision & geometry', 'Helped develop floor-plan analysis using Python image processing, geometric rules, and ONNX models. The workflow identifies candidate walls, doors, windows, and furniture, repairs wall connections, diagnoses unclosed spaces, and partitions rooms.'],
+      ['Team-delivered features', 'The project supports wall-solid merging, furniture dragging and rotation, snapping, collision detection, and GLB imports. It includes 17 types of procedural furniture and 160 PBR base materials, with material editing and high-resolution image export.'],
+      ['My contribution: testing & validation', 'Responsible for functional testing, result validation, and issue feedback. Used Python and Node.js automated tests and browser interaction to verify recognition results, geometry, and compatibility, and contributed to fixes and regression testing.'],
+      ['Collaboration & project links', 'This is a two-person project; the features described above are team outcomes. Its repositories are under my other development account, ETET114514. The homepage drawing is a workflow schematic; see the showcase repository for actual project visuals.']
+    ],
+    links: [['Showcase repository', 'https://github.com/ETET114514/GewuZhizao_Showcase'], ['Development repository', 'https://github.com/ETET114514/GewuZhizaoNew']]
+  },
+  nodebb: {
+    kicker: '02 / BACKEND & LLM', title: 'NodeBB · Course Q&A Platform',
+    role: 'Backend developer · Four-person CMU course team · Jan–Apr 2026',
+    sections: [
+      ['The context', 'Extended the open-source NodeBB forum for university course Q&A. Worked in a four-person team on requirements, agile iteration, code review, and functional testing.'],
+      ['Backend APIs: question status', 'Implemented backend APIs for resolved and unresolved post status, including updates, filtering, and automated tests to improve the organization and retrieval of course questions.'],
+      ['AI integration: post translation', 'Helped integrate a locally deployed open-source LLM with NodeBB for post translation, connecting backend model calls with the existing application logic.'],
+      ['Engineering: CI & deployment', 'Integrated Semgrep static analysis into GitHub Actions and contributed to Docker deployment, backend testing, and runtime troubleshooting.']
+    ],
+    links: [['GitHub profile', 'https://github.com/TonyHeeee']]
+  },
+  pipedream: {
+    kicker: '03 / OPEN SOURCE', title: 'Pipedream · Fitbit MCP',
+    role: 'Open-source contributor · PipedreamHQ/pipedream · Apr 2026',
+    sections: [
+      ['My feature', 'Developed the daily Activity Summary functionality for the Fitbit MCP integration, making activity metrics available as structured data for integration workflows.'],
+      ['API wrappers & data processing', 'Wrote reusable Fitbit API request helpers to retrieve and process calories burned, distance, active minutes, and other activity metrics into structured output.'],
+      ['Review & merge', 'Submitted PR #20666, which was merged upstream: 3 files changed, 106 lines added, and 4 removed. Addressed maintainer feedback, removed unrelated files, and ran JavaScript syntax checks.'],
+      ['Inspect the work', 'The upstream pull request below contains the code changes, review discussion, and merge record.']
+    ],
+    links: [['View merged PR #20666', 'https://github.com/PipedreamHQ/pipedream/pull/20666']]
+  }
+};
 const dialog = $('#project-dialog');
 let opener;
-document.querySelectorAll('[data-project]').forEach(button => {
-  button.addEventListener('click', () => {
-    const project = projects[button.dataset.project];
-    opener = button;
+let activeProject;
+function renderProject(key) {
+    const project = (language === 'en' ? projectsEn : projectsZh)[key];
     $('#dialog-kicker').textContent = project.kicker;
     $('#dialog-title').textContent = project.title;
     $('#dialog-role').textContent = project.role;
@@ -92,6 +131,12 @@ document.querySelectorAll('[data-project]').forEach(button => {
       link.className = 'button ' + (index === 0 ? 'primary' : 'secondary');
       link.textContent = label + ' ↗'; link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer'; return link;
     }));
+}
+document.querySelectorAll('[data-project]').forEach(button => {
+  button.addEventListener('click', () => {
+    opener = button;
+    activeProject = button.dataset.project;
+    renderProject(activeProject);
     dialog.showModal(); dialog.scrollTop = 0;
   });
 });
@@ -102,7 +147,45 @@ dialog.addEventListener('close', () => opener?.focus({preventScroll:true}));
 let toastTimer;
 function toast(message) { const element = $('#toast'); element.textContent = message; element.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { element.hidden = true; }, 4000); }
 $('#copy-email').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText('tonyhedonglin@163.com'); toast('邮箱已复制'); }
-  catch { toast('请复制邮箱：tonyhedonglin@163.com'); }
+  try { await navigator.clipboard.writeText(t('contactEmail')); toast(t('emailCopied')); }
+  catch { toast(t('emailFallback')); }
 });
+function applyLanguage(nextLanguage) {
+  language = nextLanguage === 'zh' ? 'zh' : 'en';
+  root.lang = language === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    element.innerHTML = t(element.dataset.i18n);
+  });
+  ['aria-label', 'title'].forEach(attribute => {
+    document.querySelectorAll(`[data-i18n-${attribute}]`).forEach(element => {
+      element.setAttribute(attribute, t(element.getAttribute(`data-i18n-${attribute}`)));
+    });
+  });
+  document.title = t('pageTitle');
+  document.querySelector('meta[name="description"]').content = t('pageDescription');
+  document.querySelectorAll('[data-resume]').forEach(link => {
+    link.href = `./assets/resume-${language}.pdf`;
+    if (link.hasAttribute('download')) link.download = language === 'en' ? 'Tony-He-Resume.pdf' : '何东霖-简历.pdf';
+  });
+  const emailLink = document.querySelector('.email');
+  emailLink.href = `mailto:${t('contactEmail')}`;
+  emailLink.replaceChildren(document.createTextNode(t('contactEmail') + ' '));
+  const arrow = document.createElement('span');
+  arrow.setAttribute('aria-hidden', 'true'); arrow.textContent = '↗'; emailLink.append(arrow);
+  document.querySelectorAll('[data-language]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.language === language));
+  });
+  applyTheme(root.dataset.theme);
+  const count = document.querySelectorAll('article.project:not([hidden])').length;
+  $('#filter-status').textContent = t('projectCount').replace('{count}', count);
+  if (dialog.open && activeProject) renderProject(activeProject);
+  $('#toast').hidden = true;
+}
+document.querySelectorAll('[data-language]').forEach(button => {
+  button.addEventListener('click', () => {
+    applyLanguage(button.dataset.language);
+    try { localStorage.setItem('donglin-language', language); } catch { /* Switching remains available without storage. */ }
+  });
+});
+applyLanguage(language);
 $('#year').textContent = new Date().getFullYear();
